@@ -7,7 +7,7 @@ function setupSocket(io) {
     let currentRoomId = null
 
     // Handle room joining
-    socket.on('join-room', ({ roomId }) => {
+    socket.on('join-room', async ({ roomId }) => {
       currentRoomId = roomId
       socket.join(roomId)
       console.log(`🧑‍🤝‍🧑 ${socket.id} joined room ${roomId}`)
@@ -15,6 +15,17 @@ function setupSocket(io) {
       // Optionally emit user count
       const roomSize = io.sockets.adapter.rooms.get(roomId)?.size || 0
       io.to(roomId).emit('user-count', roomSize)
+
+      // Fetch existing drawings from database and send to the new user
+      try {
+        const room = await Room.findOne({ roomId })
+        if (room && room.drawingData && room.drawingData.length > 0) {
+          // Send the drawing data only to the user who just joined
+          socket.emit('load-drawing', { drawingData: room.drawingData })
+        }
+      } catch (err) {
+        console.error('Error fetching room data:', err)
+      }
     })
 
     // Handle room leaving
@@ -70,6 +81,21 @@ function setupSocket(io) {
         socketId: socket.id,
         point
       })
+
+      // Store drawing point for persistence
+      const command = {
+        type: 'stroke-move',
+        data: { point },
+        timestamp: new Date()
+      }
+      
+      Room.findOneAndUpdate(
+        { roomId: currentRoomId },
+        {
+          $push: { drawingData: command },
+          $set: { lastActivity: new Date() }
+        }
+      ).exec().catch(err => console.error('DB Error:', err))
     })
 
     // Handle drawing end
@@ -78,6 +104,21 @@ function setupSocket(io) {
       socket.to(currentRoomId).emit('remote-draw-end', {
         socketId: socket.id
       })
+
+      // Store drawing end for persistence
+      const command = {
+        type: 'stroke-end',
+        data: {},
+        timestamp: new Date()
+      }
+      
+      Room.findOneAndUpdate(
+        { roomId: currentRoomId },
+        {
+          $push: { drawingData: command },
+          $set: { lastActivity: new Date() }
+        }
+      ).exec().catch(err => console.error('DB Error:', err))
     })
 
     // Handle clear canvas

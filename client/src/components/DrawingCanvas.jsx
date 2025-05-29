@@ -12,6 +12,39 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight - 100
 
+    // Function to replay drawing from saved data
+    const replayDrawing = (drawingData) => {
+      if (!drawingData || !drawingData.length) return;
+      
+      const ctx = canvas.getContext('2d')
+      
+      let currentStroke = null;
+      
+      // Process each drawing command in sequence
+      drawingData.forEach(cmd => {
+        if (cmd.type === 'clear') {
+          // Clear the entire canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        else if (cmd.type === 'stroke-start') {
+          // Start a new stroke
+          currentStroke = cmd.data;
+          ctx.beginPath();
+          ctx.strokeStyle = currentStroke.color;
+          ctx.lineWidth = currentStroke.width;
+          ctx.lineCap = 'round';
+          ctx.moveTo(currentStroke.start.x, currentStroke.start.y);
+        }
+        else if (cmd.type === 'stroke-move' && currentStroke) {
+          // Continue the current stroke
+          const point = cmd.data.point;
+          ctx.lineTo(point.x, point.y);
+          ctx.stroke();
+        }
+        // stroke-end doesn't need specific handling in replay
+      });
+    };
+
     // Incoming draw events
     socket.on('remote-draw-start', ({ stroke }) => {
       const ctx = canvas.getContext('2d')
@@ -33,10 +66,17 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     })
 
+    // Handle loading saved drawing data
+    socket.on('load-drawing', ({ drawingData }) => {
+      console.log('Received saved drawing data', drawingData.length);
+      replayDrawing(drawingData);
+    });
+
     return () => {
       socket.off('remote-draw-start')
       socket.off('remote-draw-move')
       socket.off('remote-clear-canvas')
+      socket.off('load-drawing')
     }
   }, [roomId])
 

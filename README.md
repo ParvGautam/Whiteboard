@@ -9,6 +9,7 @@ A collaborative whiteboard application built with the MERN stack (MongoDB, Expre
 - Simple room-based collaboration (no authentication required)
 - Adjustable stroke width and color selection
 - Canvas clearing functionality
+- Drawing persistence: drawings are saved and can be retrieved when rejoining a room
 
 ## Table of Contents
 

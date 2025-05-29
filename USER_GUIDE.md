@@ -39,12 +39,22 @@ The toolbar at the top of the whiteboard provides several options:
 - **View Others' Drawing**: As others draw, their strokes will appear in real-time
 - **See Cursors**: Other users' cursor positions are shown with colored cursor icons
 
+### Persistent Drawings
+
+Your drawings are automatically saved to the room and will persist even if you leave and come back later:
+
+- **Automatic Saving**: Every stroke you draw is automatically saved to the server
+- **Room Persistence**: When you rejoin a room using the same code, all previous drawings will be restored
+- **Long-term Storage**: Drawings in a room are preserved for up to 30 days after the last activity
+- **Shared Persistence**: All users joining the same room will see the same saved drawings
+
 ### Tips for Effective Collaboration
 
 1. **Coordinate Verbally**: Use a separate voice chat or video call to discuss what you're drawing
 2. **Take Turns**: Avoid drawing in the same area simultaneously for best results
 3. **Use Different Colors**: Assign different colors to different users to distinguish contributions
 4. **Clearing Carefully**: Remember that clearing the canvas affects everyone, so confirm before doing so
+5. **Reuse Room Codes**: For ongoing projects, reuse the same room code to access your previous work
 
 ## Troubleshooting
 
@@ -59,6 +69,11 @@ The toolbar at the top of the whiteboard provides several options:
    - Check the user count to confirm others are connected
    - Ensure your internet connection is stable
    - Try refreshing the page
+
+3. **Saved Drawings Not Loading**:
+   - Verify you're using the exact same room code as before
+   - Check if more than 30 days have passed since last activity in the room
+   - If still having issues, try clearing your browser cache
 
 3. **Laggy Performance**:
    - Drawing with thinner lines improves performance
@@ -77,7 +92,7 @@ The whiteboard works best on:
 
 - No personal information is collected or stored
 - Your drawings are saved to the room but are not publicly accessible
-- Rooms that are inactive for 24+ hours may be automatically deleted
+- Rooms that are inactive for 30 days will be automatically deleted
 
 ## Keyboard Shortcuts
 
