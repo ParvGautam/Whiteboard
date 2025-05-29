@@ -9,17 +9,27 @@ const setupSocket = require('./socket');
 // Load environment variables if available
 require('dotenv').config();
 
+// Frontend deployed URL
+const FRONTEND_URL = 'https://whiteboard07.vercel.app';
+
 const app = express();
 const server = http.createServer(app);
+
+// Configure Socket.io with CORS settings
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: [FRONTEND_URL, 'http://localhost:5173'], // Allow both deployed frontend and local development
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
-// Middleware
-app.use(cors());
+// Configure Express CORS middleware
+app.use(cors({
+  origin: [FRONTEND_URL, 'http://localhost:5173'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // API Routes
@@ -30,6 +40,7 @@ app.get('/',(req,res)=>{
         error:false,
     })
 })
+
 // MongoDB connection string - replace with your own connection string from MongoDB Atlas
 const MONGODB_URI = process.env.MONGODB_URI 
 
@@ -48,4 +59,7 @@ mongoose.connect(MONGODB_URI, {
 setupSocket(io);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT} - http://localhost:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} - http://localhost:${PORT}`);
+  console.log(`Accepting requests from: ${FRONTEND_URL}`);
+});

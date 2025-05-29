@@ -11,6 +11,15 @@ A collaborative whiteboard application built with the MERN stack (MongoDB, Expre
 - Canvas clearing functionality
 - Drawing persistence: drawings are saved and can be retrieved when rejoining a room
 
+## Deployed Version
+
+The backend API and Socket.io server are deployed at:
+```
+https://whiteboard-swart-sigma.vercel.app
+```
+
+The frontend client connects to this deployed backend by default. If you want to use a local backend server for development, modify the `API_BASE_URL` in `client/src/config.js`.
+
 ## Table of Contents
 
 - [Setup Instructions](#setup-instructions)

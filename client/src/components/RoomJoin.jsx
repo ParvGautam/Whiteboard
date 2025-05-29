@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 function RoomJoin() {
   const [roomCode, setRoomCode] = useState('');
@@ -27,7 +28,7 @@ function RoomJoin() {
     setError('');
 
     try {
-      await axios.post('http://localhost:5000/api/rooms/join', { roomId: roomCode });
+      await axios.post(`${API_BASE_URL}/api/rooms/join`, { roomId: roomCode });
       navigate(`/room/${roomCode}`);
     } catch (err) {
       setError('Error joining room. Please try again.');
