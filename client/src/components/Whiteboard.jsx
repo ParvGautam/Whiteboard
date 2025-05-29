@@ -10,18 +10,61 @@ function Whiteboard() {
   const navigate = useNavigate()
   const [strokeColor, setStrokeColor] = useState('black')
   const [strokeWidth, setStrokeWidth] = useState(2)
+  const [socketConnected, setSocketConnected] = useState(socket.connected)
+  const [connectionError, setConnectionError] = useState(null)
 
   useEffect(() => {
-    socket.emit('join-room', { roomId })
+    // Handle socket connection status
+    const onConnect = () => {
+      console.log('Socket connected successfully');
+      setSocketConnected(true);
+      setConnectionError(null);
+      
+      // Only join room when connection is established
+      socket.emit('join-room', { roomId });
+    };
 
+    const onDisconnect = () => {
+      console.log('Socket disconnected');
+      setSocketConnected(false);
+    };
+
+    const onConnectError = (err) => {
+      console.error('Socket connection error:', err);
+      setSocketConnected(false);
+      setConnectionError(`Connection error: ${err.message}`);
+    };
+
+    // Register socket event handlers
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
+
+    // Initial connection status
+    if (socket.connected) {
+      socket.emit('join-room', { roomId });
+    }
+
+    // Cleanup function
     return () => {
-      socket.emit('leave-room', { roomId })
+      // Remove event listeners
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+      
+      // Leave room when component unmounts
+      socket.emit('leave-room', { roomId });
     }
   }, [roomId])
 
   const handleGoBack = () => {
     navigate('/')
   }
+
+  // Function to attempt reconnection
+  const handleReconnect = () => {
+    socket.connect();
+  };
 
   return (
     <div style={styles.container}>
@@ -30,7 +73,24 @@ function Whiteboard() {
           ← Back
         </button>
         <h2 style={styles.roomInfo}>Room: {roomId}</h2>
+        <div style={styles.connectionStatus}>
+          {socketConnected ? (
+            <span style={styles.connected}>● Connected</span>
+          ) : (
+            <span style={styles.disconnected}>● Disconnected</span>
+          )}
+        </div>
       </div>
+      
+      {/* Show error message if connection fails */}
+      {connectionError && (
+        <div style={styles.errorBanner}>
+          {connectionError}
+          <button onClick={handleReconnect} style={styles.reconnectButton}>
+            Try Again
+          </button>
+        </div>
+      )}
       
       <Toolbar
         strokeColor={strokeColor}
@@ -44,6 +104,7 @@ function Whiteboard() {
           roomId={roomId}
           strokeColor={strokeColor}
           strokeWidth={strokeWidth}
+          socketConnected={socketConnected}
         />
       </div>
       
@@ -77,12 +138,39 @@ const styles = {
   },
   roomInfo: {
     margin: 0,
-    fontSize: '1.2rem'
+    fontSize: '1.2rem',
+    flex: 1
   },
   canvasContainer: {
     flex: 1,
     overflow: 'hidden',
     position: 'relative'
+  },
+  connectionStatus: {
+    fontSize: '0.8rem',
+    marginLeft: '10px'
+  },
+  connected: {
+    color: '#4caf50'
+  },
+  disconnected: {
+    color: '#f44336'
+  },
+  errorBanner: {
+    backgroundColor: '#ffebee',
+    color: '#d32f2f',
+    padding: '8px 16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  reconnectButton: {
+    backgroundColor: '#d32f2f',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    padding: '4px 8px',
+    cursor: 'pointer'
   }
 }
 

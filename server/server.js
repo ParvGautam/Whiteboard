@@ -15,31 +15,61 @@ const FRONTEND_URL = 'https://whiteboard07.vercel.app';
 const app = express();
 const server = http.createServer(app);
 
-// Configure Socket.io with CORS settings
+// Configure Socket.io with CORS settings and additional options for Vercel
 const io = new Server(server, {
   cors: {
     origin: [FRONTEND_URL, 'http://localhost:5173'], // Allow both deployed frontend and local development
     methods: ['GET', 'POST'],
-    credentials: true
-  }
+    credentials: true,
+    allowedHeaders: ['my-custom-header']
+  },
+  // Enable all transports
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  // Increase ping timeout for Vercel
+  pingTimeout: 60000,
+  // Upgrade mechanism
+  allowUpgrades: true,
+  // Path configuration
+  path: '/socket.io/',
+  // Cookie settings
+  cookie: false
 });
 
 // Configure Express CORS middleware
 app.use(cors({
   origin: [FRONTEND_URL, 'http://localhost:5173'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add preflight OPTIONS handling
+app.options('*', cors());
 
 app.use(express.json());
 
-// API Routes
-app.use('/api/rooms', roomRoutes);
+// Health check endpoint
 app.get('/',(req,res)=>{
     res.send({
-        activeStatus:true,
-        error:false,
-    })
-})
+        activeStatus: true,
+        error: false,
+        socketConnected: true,
+        clientOrigin: req.headers.origin || 'unknown'
+    });
+});
+
+// Socket.io test endpoint
+app.get('/socket-test', (req, res) => {
+    res.send({
+        socketStatus: 'Socket.io server is running',
+        transports: ['polling', 'websocket'],
+        supportedOrigins: [FRONTEND_URL, 'http://localhost:5173']
+    });
+});
+
+// API Routes
+app.use('/api/rooms', roomRoutes);
 
 // MongoDB connection string - replace with your own connection string from MongoDB Atlas
 const MONGODB_URI = process.env.MONGODB_URI 

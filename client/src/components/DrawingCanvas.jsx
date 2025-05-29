@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import socket from '../socket'
 
-function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
+function DrawingCanvas({ roomId, strokeColor, strokeWidth, socketConnected = true }) {
   const canvasRef = useRef(null)
   const [drawing, setDrawing] = useState(false)
   const [_lastPoint, setLastPoint] = useState(null)
+  const [isLocalDrawing, setIsLocalDrawing] = useState(false)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -12,7 +13,7 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight - 100
 
-    // Function to replay drawing from saved data                          
+    // Function to replay drawing from saved data
     const replayDrawing = (drawingData) => {
       if (!drawingData || !drawingData.length) return;
       
@@ -91,6 +92,7 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
 
   const handleMouseDown = (e) => {
     setDrawing(true)
+    setIsLocalDrawing(true)
     const start = getMousePos(e)
     setLastPoint(start)
     
@@ -101,14 +103,17 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
     ctx.lineCap = 'round'
     ctx.moveTo(start.x, start.y)
 
-    socket.emit('draw-start', {
-      roomId,
-      stroke: {
-        start,
-        color: strokeColor,
-        width: strokeWidth
-      }
-    })
+    // Only send to server if socket is connected
+    if (socketConnected) {
+      socket.emit('draw-start', {
+        roomId,
+        stroke: {
+          start,
+          color: strokeColor,
+          width: strokeWidth
+        }
+      })
+    }
   }
 
   const handleMouseMove = (e) => {
@@ -121,18 +126,21 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
     ctx.lineTo(currentPoint.x, currentPoint.y)
     ctx.stroke()
     
-    // Send to others
-    socket.emit('draw-move', { 
-      roomId, 
-      point: currentPoint 
-    })
-    
-    // Update cursor position for others
-    socket.emit('cursor-move', { 
-      roomId, 
-      x: e.clientX, 
-      y: e.clientY 
-    })
+    // Only send to server if socket is connected
+    if (socketConnected) {
+      // Send to others
+      socket.emit('draw-move', { 
+        roomId, 
+        point: currentPoint 
+      })
+      
+      // Update cursor position for others
+      socket.emit('cursor-move', { 
+        roomId, 
+        x: e.clientX, 
+        y: e.clientY 
+      })
+    }
     
     setLastPoint(currentPoint)
   }
@@ -140,27 +148,64 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
   const handleMouseUp = () => {
     if (drawing) {
       setDrawing(false)
-      socket.emit('draw-end', { roomId })
+      setIsLocalDrawing(false)
+      
+      // Only send to server if socket is connected
+      if (socketConnected) {
+        socket.emit('draw-end', { roomId })
+      }
     }
   }
 
   const handleMouseLeave = () => {
     if (drawing) {
       setDrawing(false)
-      socket.emit('draw-end', { roomId })
+      setIsLocalDrawing(false)
+      
+      // Only send to server if socket is connected
+      if (socketConnected) {
+        socket.emit('draw-end', { roomId })
+      }
     }
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      style={{ border: '1px solid #ccc', display: 'block' }}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <canvas
+        ref={canvasRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{ border: '1px solid #ccc', display: 'block' }}
+      />
+      
+      {!socketConnected && !isLocalDrawing && (
+        <div style={styles.offlineOverlay}>
+          <div style={styles.offlineMessage}>
+            Offline Mode: You can draw, but changes won't be saved or shared until reconnected
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
+
+const styles = {
+  offlineOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    padding: '10px',
+    zIndex: 10,
+  },
+  offlineMessage: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: '14px'
+  }
+};
 
 export default DrawingCanvas
