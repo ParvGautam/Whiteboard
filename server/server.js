@@ -24,7 +24,12 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/rooms', roomRoutes);
-
+app.get('/',(req,res)=>{
+    res.send({
+        activeStatus:true,
+        error:false,
+    })
+})
 // MongoDB connection string - replace with your own connection string from MongoDB Atlas
 const MONGODB_URI = process.env.MONGODB_URI 
 
