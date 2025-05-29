@@ -12,7 +12,7 @@ function DrawingCanvas({ roomId, strokeColor, strokeWidth }) {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight - 100
 
-    // Function to replay drawing from saved data
+    // Function to replay drawing from saved data                          
     const replayDrawing = (drawingData) => {
       if (!drawingData || !drawingData.length) return;
       
