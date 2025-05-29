@@ -1,0 +1,18 @@
+.room-join {
+  text-align: center;
+  padding-top: 100px;
+}
+
+input {
+  padding: 10px;
+  margin-right: 10px;
+  width: 200px;
+}
+
+button {
+  padding: 10px 20px;
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
